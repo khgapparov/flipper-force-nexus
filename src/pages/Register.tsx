@@ -36,7 +36,7 @@ const Register = () => {
     setIsLoading(true)
 
     try {
-      await authApi.register(formData)
+      const response = await authApi.register(formData)
       toast({
         title: "Account created!",
         description: "Welcome to FlipperForce. Your account has been created successfully.",

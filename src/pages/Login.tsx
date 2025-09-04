@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/enhanced-button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -15,6 +15,7 @@ const Login = () => {
   })
   const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
+  const navigate = useNavigate()
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -26,13 +27,13 @@ const Login = () => {
     setIsLoading(true)
 
     try {
-      await authApi.login(formData)
+      const response = await authApi.login(formData)
       toast({
         title: "Welcome back!",
         description: "Successfully signed in to your account.",
       })
-      // Redirect to dashboard (would normally use router here)
-      window.location.href = '/dashboard'
+      // Redirect to dashboard using React Router
+      navigate('/dashboard')
     } catch (error) {
       toast({
         title: "Sign in failed",

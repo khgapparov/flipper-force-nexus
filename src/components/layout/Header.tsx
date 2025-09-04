@@ -21,6 +21,9 @@ const Header = () => {
           <a href="#about" className="text-muted-foreground hover:text-foreground transition-smooth">
             About
           </a>
+          <Link to="/updates" className="text-muted-foreground hover:text-foreground transition-smooth">
+            Updates
+          </Link>
         </nav>
 
         <div className="hidden md:flex items-center gap-4">
