@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -17,7 +18,8 @@ import {
   FileText,
   Settings,
   Bell,
-  Search
+  Search,
+  Upload
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { projectsApi, type Project as ApiProject } from "@/lib/api";
@@ -77,6 +79,7 @@ const mockProjects: Project[] = [
 ];
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [backendProjects, setBackendProjects] = useState<ApiProject[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -304,9 +307,20 @@ const Dashboard = () => {
                             <Clock className="h-3 w-3 mr-1" />
                             Created {new Date(project.createdAt).toLocaleDateString()}
                           </div>
-                          <Button variant="ghost" size="sm">
-                            <Eye className="h-4 w-4" />
-                          </Button>
+                          <div className="flex items-center space-x-1">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => navigate(`/projects/${project.id}/updates`)}
+                              className="gap-1"
+                            >
+                              <Upload className="h-3 w-3" />
+                              Updates
+                            </Button>
+                            <Button variant="ghost" size="sm">
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </div>
                         {project.estimatedCompletion && (
                           <p className="text-xs text-muted-foreground mt-1">
