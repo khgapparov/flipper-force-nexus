@@ -1,5 +1,5 @@
 // FlipperForce API Client
-const API_BASE_URL = 'http://localhost:9000'
+const API_BASE_URL = 'http://89.207.254.9:9000'
 
 // Types
 export interface User {
@@ -70,9 +70,53 @@ export interface CreatePropertyRequest {
 }
 
 export interface CreateProjectRequest {
-  propertyId: string
-  projectName?: string
-  budget?: number
+  propertyId: string;
+  projectName?: string;
+  budget?: number;
+}
+
+export interface ProgressNote {
+  id: string;
+  projectId: string;
+  note: string;
+  author: string;
+  createdAt: string;
+}
+
+export interface ProjectPhoto {
+  id: string;
+  projectId: string;
+  url: string;
+  description: string;
+  uploadedBy: string;
+  createdAt: string;
+}
+
+export interface ProjectExpense {
+  id: string;
+  projectId: string;
+  amount: number;
+  vendor: string;
+  description: string;
+  receiptUrl?: string;
+  createdBy: string;
+  createdAt: string;
+}
+
+export interface CreateProgressNoteRequest {
+  note: string;
+}
+
+export interface CreatePhotoRequest {
+  description: string;
+  // File will be handled separately in FormData
+}
+
+export interface CreateExpenseRequest {
+  amount: number;
+  vendor: string;
+  description: string;
+  // Receipt file will be handled separately in FormData
 }
 
 // Utility functions
@@ -167,7 +211,7 @@ export const projectsApi = {
       id: project.projectId || project.id,
       name: project.projectName || project.name,
       address: project.address || '',
-      status: project.status,
+      status: project.status === 'LEAD' ? 'Lead' : project.status,
       budget: project.budget || 0,
       currentSpend: project.currentSpend || 0,
       estimatedCompletion: project.estimatedCompletion || '',
@@ -176,7 +220,19 @@ export const projectsApi = {
   },
 
   async getById(id: string): Promise<Project> {
-    return apiFetch(`${API_BASE_URL}/api/projects/${id}`);
+    const data = await apiFetch(`${API_BASE_URL}/api/projects/${id}`);
+    const project = data.project || data;
+    
+    return {
+      id: project.projectId || project.id,
+      name: project.projectName || project.name,
+      address: project.address || '',
+      status: project.status === 'LEAD' ? 'Lead' : project.status,
+      budget: project.budget || 0,
+      currentSpend: project.currentSpend || 0,
+      estimatedCompletion: project.estimatedCompletion || '',
+      createdAt: project.createdAt || new Date().toISOString()
+    };
   },
 
   async create(projectData: CreateProjectRequest): Promise<Project> {
@@ -190,7 +246,7 @@ export const projectsApi = {
       id: project.projectId || project.id,
       name: project.projectName || project.name,
       address: project.address || '',
-      status: project.status,
+      status: project.status === 'LEAD' ? 'Lead' : project.status,
       budget: project.budget || 0,
       currentSpend: project.currentSpend || 0,
       estimatedCompletion: project.estimatedCompletion || '',
@@ -328,3 +384,121 @@ export const dashboardApi = {
     };
   }
 }
+
+export const projectUpdatesApi = {
+  // Progress Notes
+  async getProgressNotes(projectId: string): Promise<ProgressNote[]> {
+    const data = await apiFetch(`${API_BASE_URL}/api/projects/${projectId}/progress-notes`);
+    const notesArray = Array.isArray(data) ? data : data.notes || [];
+    
+    return notesArray.map((note: any) => ({
+      id: note.id,
+      projectId: note.projectId,
+      note: note.note,
+      author: note.author || "Unknown",
+      createdAt: note.createdAt || new Date().toISOString()
+    }));
+  },
+
+  async createProgressNote(projectId: string, noteData: CreateProgressNoteRequest): Promise<ProgressNote> {
+    const data = await apiFetch(`${API_BASE_URL}/api/projects/${projectId}/progress-notes`, {
+      method: 'POST',
+      body: JSON.stringify(noteData)
+    });
+    
+    return {
+      id: data.id,
+      projectId: data.projectId,
+      note: data.note,
+      author: data.author || "Current User",
+      createdAt: data.createdAt || new Date().toISOString()
+    };
+  },
+
+  // Photos
+  async getProjectPhotos(projectId: string): Promise<ProjectPhoto[]> {
+    const data = await apiFetch(`${API_BASE_URL}/api/projects/${projectId}/photos`);
+    const photosArray = Array.isArray(data) ? data : data.photos || [];
+    
+    return photosArray.map((photo: any) => ({
+      id: photo.id,
+      projectId: photo.projectId,
+      url: photo.url || "/placeholder.svg",
+      description: photo.description,
+      uploadedBy: photo.uploadedBy || "Unknown",
+      createdAt: photo.createdAt || new Date().toISOString()
+    }));
+  },
+
+  async uploadProjectPhoto(projectId: string, description: string, photo: File): Promise<ProjectPhoto> {
+    const formData = new FormData();
+    formData.append("description", description);
+    formData.append("filename", photo.name);
+    formData.append("image", photo);
+
+    const data = await apiFetch(`${API_BASE_URL}/api/projects/${projectId}/photos`, {
+      method: 'POST',
+      body: formData
+    }, false);
+    
+    return {
+      id: data.id,
+      projectId: data.projectId,
+      url: data.url || "/placeholder.svg",
+      description: data.description,
+      uploadedBy: data.uploadedBy || "Current User",
+      createdAt: data.createdAt || new Date().toISOString()
+    };
+  },
+
+  // Expenses
+  async getProjectExpenses(projectId: string): Promise<ProjectExpense[]> {
+    const data = await apiFetch(`${API_BASE_URL}/api/projects/${projectId}/expenses`);
+    const expensesArray = Array.isArray(data) ? data : data.expenses || [];
+    
+    return expensesArray.map((expense: any) => ({
+      id: expense.id,
+      projectId: expense.projectId,
+      amount: expense.amount || 0,
+      vendor: expense.vendor,
+      description: expense.description,
+      receiptUrl: expense.receiptUrl,
+      createdBy: expense.createdBy || "Unknown",
+      createdAt: expense.createdAt || new Date().toISOString()
+    }));
+  },
+
+  async createProjectExpense(projectId: string, expenseData: CreateExpenseRequest, receipt?: File): Promise<ProjectExpense> {
+    let data;
+    
+    if (receipt) {
+      const formData = new FormData();
+      formData.append("amount", expenseData.amount.toString());
+      formData.append("vendor", expenseData.vendor);
+      formData.append("description", expenseData.description);
+      formData.append("filename", receipt.name);
+      formData.append("receipt", receipt);
+
+      data = await apiFetch(`${API_BASE_URL}/api/projects/${projectId}/expenses`, {
+        method: 'POST',
+        body: formData
+      }, false);
+    } else {
+      data = await apiFetch(`${API_BASE_URL}/api/projects/${projectId}/expenses`, {
+        method: 'POST',
+        body: JSON.stringify(expenseData)
+      });
+    }
+    
+    return {
+      id: data.id,
+      projectId: data.projectId,
+      amount: data.amount || 0,
+      vendor: data.vendor,
+      description: data.description,
+      receiptUrl: data.receiptUrl,
+      createdBy: data.createdBy || "Current User",
+      createdAt: data.createdAt || new Date().toISOString()
+    };
+  }
+};

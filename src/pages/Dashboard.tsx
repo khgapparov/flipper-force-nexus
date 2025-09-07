@@ -311,14 +311,11 @@ const Dashboard = () => {
                             <Button 
                               variant="ghost" 
                               size="sm"
-                              onClick={() => navigate(`/projects/${project.id}/updates`)}
+                              onClick={() => navigate(`/projects/${project.id}`)}
                               className="gap-1"
                             >
-                              <Upload className="h-3 w-3" />
-                              Updates
-                            </Button>
-                            <Button variant="ghost" size="sm">
-                              <Eye className="h-4 w-4" />
+                              <Eye className="h-3 w-3" />
+                              View Details
                             </Button>
                           </div>
                         </div>
